@@ -2,7 +2,7 @@
 	ECE357 Operating Systems
 	Dolen Le
 	PS 7.1 TEST TAS
-	gcc tastest.c -lrt
+	gcc tastest.c tas64.S -lrt
 	Prof. Hakner
 */
 
@@ -20,13 +20,17 @@
 int tas(volatile char *spinlock);
 
 int main() {
-	int mem = shm_open("/tas_share", O_RDWR | O_CREAT | O_TRUNC, 0766);
+	int mem = shm_open("/lol", O_RDWR | O_CREAT | O_TRUNC, 0766); //or MAP_ANONYMOUS
 	size_t size = sizeof(unsigned long)*2;
 	if(mem<0 || ftruncate(mem, size)<0) {
 		perror("Cannot create shared memory");
 		exit(-1);
 	}
 	unsigned long *test = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, mem, 0);
+	if(test == MAP_FAILED) {
+		perror("mmap failed");
+		exit(-1);
+	}
 	printf("Initializing test value to zero\n");
 	*test = 0L;
 
