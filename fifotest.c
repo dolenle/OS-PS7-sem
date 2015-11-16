@@ -2,14 +2,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/resource.h>
 #include <sys/mman.h>
-#include <setjmp.h>
-#include <errno.h>
 
 int my_procnum = 0;
 unsigned long last, cur;
@@ -25,12 +20,11 @@ int main(){
 	if(fork() == 0) {
 		printf("Writer PID %d\n", getpid());
 		unsigned long i;
-		for(i=1; i<2<<12; i++) {
+		for(i=1; i<2<<13; i++) {
 			printf("Write %lu\n", i);
 			fifo_wr(ff, i);
 		}
 		fifo_wr(ff, 0);
-		// fifo_wr(ff, 0);
 		printf("done writing\n");
 		exit(0);
 	} else {

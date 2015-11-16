@@ -5,7 +5,7 @@
 	Prof. Hakner
 */
 
-#define N_PROC 4 //maximum allowed processors
+#define N_PROC 64 //maximum allowed processors
 
 extern int my_procnum; //make this extern later
 

@@ -23,6 +23,11 @@ const struct sigaction sigusr_act = {
 void sem_init(struct sem *s, int count) {
 	s->count = count;
 	s->lock = 0;
+	sigset_t blockUsr;
+	sigemptyset(&blockUsr);
+	sigaddset(&blockUsr, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &blockUsr, NULL); //block sigusr1
+	sigaction(SIGUSR1, &sigusr_act, NULL);
 }
 
 int sem_try(struct sem *s) {
@@ -50,46 +55,46 @@ void sem_wait(struct sem *s) {
 	sigdelset(&usr_only, SIGUSR1);
 	sigdelset(&usr_only, SIGINT);
 	sigprocmask(SIG_BLOCK, &all, &oldset); //block signals in critical region
-	while(tas(&(s->lock))); //wait for lock
 	
 	for(;;) {
+		while(tas(&(s->lock))); //wait for lock
 		if(s->count > 0) {
 			s->count--;
-			s->cpus[my_procnum] = 0;
+			// s->cpus[my_procnum] = 0;
 			s->lock = 0;
 			break;
 		} else { //block
 			sigaction(SIGUSR1, &sigusr_act, &oldaction); //intercept SIGUSR1
 			s->cpus[my_procnum] = getpid();
 			s->lock = 0;
-			// printf("suspending %d\n",s->cpus[my_procnum]);
+			// printf("suspending %d (%d)\n",s->cpus[my_procnum], my_procnum);
 			sigsuspend(&usr_only); //returns when semaphore increments
-			// printf("\t\twoken\n");
-			// sigaction(SIGUSR1, &oldaction, NULL); //restore original SIGUSR1 action
+			// printf("\t\t%d (%d) woken\n", s->cpus[my_procnum], my_procnum);
+			sigaction(SIGUSR1, &oldaction, NULL); //restore original SIGUSR1 action
 		}
 	}
-	sigprocmask(SIG_SETMASK, &oldset, NULL); //restore original mask
+	// sigprocmask(SIG_SETMASK, &oldset, NULL); //restore original mask
 }
 
 void sem_inc(struct sem *s) {
 	// printf("sem_inc %d\n", my_procnum);
+	while(tas(&(s->lock))); //spin
 	sigset_t all, oldset;
 	sigfillset(&all);
 	sigprocmask(SIG_BLOCK, &all, &oldset); //block signals in critical region
-	while(tas(&(s->lock))); //spin
 	s->count++;
 	int i;
 	for(i = 0; i < N_PROC; i++) {
 		// printf("check cpu %d: %d\n", i, s->cpus[i]);
 		if(s->cpus[i] != 0) {
-			// printf("waking %d\n",s->cpus[i]);
+			// printf("wanking %d (%d)\n",s->cpus[i], i);
 			kill(s->cpus[i], SIGUSR1); //wake next cpu
-			// s->cpus[i] = 0;
+			s->cpus[i] = 0;
 			break;
 		}
 	}
-	s->lock = 0;
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
+	s->lock = 0;
 }
 
 // int main() {

@@ -9,8 +9,7 @@
 
 #define MYFIFO_BUFSIZ 4096
 
-struct fifo
-{
+struct fifo {
 	unsigned long buf[MYFIFO_BUFSIZ];
 	int read_addr, write_addr;	
 	struct sem mutex, read_sem, write_sem;
