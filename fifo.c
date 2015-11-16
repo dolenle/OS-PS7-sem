@@ -21,7 +21,6 @@ void fifo_wr(struct fifo *f, unsigned long d) {
 	sem_wait(&(f->write_sem));
 	sem_wait(&(f->mutex));
 	f->buf[f->write_addr] = d;
-	printf("\tFIFOWrite %lu to %d\n", d, f->write_addr);
 	f->write_addr = (f->write_addr+1) % MYFIFO_BUFSIZ;
 	sem_inc(&(f->mutex));
 	sem_inc(&(f->read_sem)); //wake reader
@@ -31,15 +30,8 @@ unsigned long fifo_rd(struct fifo *f) {
 	sem_wait(&(f->read_sem));
 	sem_wait(&(f->mutex));
 	unsigned long d = f->buf[f->read_addr];
-	printf("FIFORead %lu from %d\t", d, f->read_addr);
 	f->read_addr = (f->read_addr+1) % MYFIFO_BUFSIZ;
 	sem_inc(&(f->mutex));
 	sem_inc(&(f->write_sem)); //wake writer
 	return d;
 }
-
-
-
-
-
-

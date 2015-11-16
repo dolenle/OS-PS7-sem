@@ -7,7 +7,7 @@
 
 #define N_PROC 64 //maximum allowed processors
 
-extern int my_procnum; //make this extern later
+extern int my_procnum;
 
 struct sem {
 	int count;
